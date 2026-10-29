@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "@/lib/supabase";
 import React, { useMemo, useState } from "react";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import {
@@ -22,6 +23,7 @@ import {
   Code2,
 } from "lucide-react";
 import { ProjectPlan, ProjectPlanSchema } from "@/lib/schema";
+import { GanttCanvas } from "@/components/GanttCanvas";
 
 /** 从消息历史里找出最近一次 renderGanttChart 工具的入参 */
 function extractPlan(messages: UIMessage[]): ProjectPlan | null {
@@ -61,6 +63,27 @@ export default function Home() {
     setInput("");
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveToCloud = async () => {
+    if (!currentPlan) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("project_plans").insert({
+        title: currentPlan.projectTitle,
+        description: currentPlan.description,
+        plan_data: currentPlan,
+      });
+
+      if (error) throw error;
+      alert("🎉 项目计划成功保存到 Supabase 云端数据库！");
+    } catch (err: any) {
+      alert("保存失败: " + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="flex h-screen w-screen flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* 1. 顶部 Header */}
@@ -75,6 +98,15 @@ export default function Home() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+           <Button
+            variant="default"
+            size="sm"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            disabled={!currentPlan || isSaving}
+            onClick={handleSaveToCloud}
+          >
+            {isSaving ? "保存中..." : "保存到云端"}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -212,62 +244,7 @@ export default function Home() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 p-6 overflow-auto">
-                  {currentPlan ? (
-                    <div className="space-y-6">
-                      <div className="bg-indigo-50/60 dark:bg-indigo-950/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
-                        <h3 className="font-semibold text-indigo-900 dark:text-indigo-200 mb-1">
-                          {currentPlan.projectTitle}
-                        </h3>
-                        <p className="text-xs text-indigo-700/80 dark:text-indigo-300/80">
-                          {currentPlan.description}
-                        </p>
-                      </div>
-
-                      {/* 阶段及任务列表展示（为第二周动态甘特图做铺垫） */}
-                      <div className="space-y-4">
-                        {currentPlan.stages.map((stage) => (
-                          <Card key={stage.id} className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                            <CardHeader className="py-3 px-4 bg-slate-50/50 dark:bg-slate-800/50 border-b">
-                              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                📍 {stage.title}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-4 divide-y divide-slate-100 dark:divide-slate-800">
-                              {stage.tasks.map((task) => (
-                                <div key={task.id} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between text-xs">
-                                  <div>
-                                    <span className="font-medium text-slate-800 dark:text-slate-200">{task.name}</span>
-                                    {task.assignee && (
-                                      <span className="ml-2 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded text-[10px]">
-                                        👤 {task.assignee}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-3 text-slate-500 font-mono">
-                                    <span>{task.startDate} ~ {task.endDate}</span>
-                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 rounded font-semibold">
-                                      {task.progress}%
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                      <div className="text-center space-y-3">
-                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400">
-                          <Code2 className="h-6 w-6" />
-                        </div>
-                        <p className="text-sm">
-                          在左侧输入项目需求，AI 将自动触发 Tool Calling 并在此处展现解析后的结构化 Plan
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  <GanttCanvas plan={currentPlan} />
                 </CardContent>
               </Card>
             </div>
