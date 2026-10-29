@@ -3,7 +3,7 @@
 
 **基于 Next.js 15 与 Vercel AI SDK 构建的现代化 AI 驱动项目规划与甘特图生成系统**
 
-[✨ 在线预览 Demo](#) · [🐛 提交 Issue](https://github.com/你的用户名/ai-gantt-canvas/issues) · [💡 贡献代码](https://github.com/你的用户名/ai-gantt-canvas/pulls)
+[✨ 在线预览 Demo](https://ai-gantt-canvas-d9fj.vercel.app/) · [🐛 提交 Issue](https://github.com/你的用户名/ai-gantt-canvas/issues) · [💡 贡献代码](https://github.com/你的用户名/ai-gantt-canvas/pulls)
 
 
 ---
